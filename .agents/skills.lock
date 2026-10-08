@@ -1,0 +1,53 @@
+{
+  "lockfileVersion": 1,
+  "skills": {
+    "csgdaa-core/commit": {
+      "version": "1.3.0",
+      "resolved": "6390aadcef1bfdc1a168c84da02ade4e1da304b8",
+      "integrity": "sha256-e5bb2f9629aa0ea83b4684437f369693332b443bbdb93eb1fafe0e06005ee03e",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/explore": {
+      "version": "1.1.0",
+      "resolved": "d4e8f90322d40e31e17a0f6f3cb5f88d97200bc7",
+      "integrity": "sha256-3a4df2416163a47519c45ebed69da98041b8f574a802f76f5ffd9e35abbced37",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/lint": {
+      "version": "1.3.0",
+      "resolved": "397e9d7708822e1cb5c0dbf0b5e1b4d413e98595",
+      "integrity": "sha256-612435fc7a303d71ae2031be88fe1456bbadb87e5a6dbe8649fd29469ece25f8",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/plan": {
+      "version": "2.4.0",
+      "resolved": "bc5a4b617476f2c7126b2e80a9cf0f2202d72f83",
+      "integrity": "sha256-199c8bd9087f80408b597b853eda387379ff9defcec98a2a9c9979ec771b6b34",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/research": {
+      "version": "1.1.0",
+      "resolved": "d4e8f90322d40e31e17a0f6f3cb5f88d97200bc7",
+      "integrity": "sha256-c26bc27becf29f062800ebda8f8a6e9838d19b4258988fc3f93ff66a7ce3a4a4",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/review": {
+      "version": "2.5.0",
+      "resolved": "567a32d3233fbdb42ec2f0d07cca4f56cc056edb",
+      "integrity": "sha256-a5805bfa920774b6b7e9399cf0725e6d5b4583c26d5b7cdc670ef8b595d3028c",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/skill-creator": {
+      "version": "1.4.1",
+      "resolved": "5f6c61d7f2094b2947b07cf4be4e9cfec02477ef",
+      "integrity": "sha256-263d20d6ddd80ee470e019cd49546f826c1a4a785df8f7647e95f8c63c487794",
+      "source": "github:bayer-int/csgdaa-skills"
+    },
+    "csgdaa-core/verify": {
+      "version": "1.1.0",
+      "resolved": "d4e8f90322d40e31e17a0f6f3cb5f88d97200bc7",
+      "integrity": "sha256-1ff33e0ace5194a11bf1ebaad46904c5aea0ea8a108dd7424f5220f6f06f316f",
+      "source": "github:bayer-int/csgdaa-skills"
+    }
+  }
+}
