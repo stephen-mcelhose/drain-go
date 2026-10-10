@@ -217,6 +217,56 @@ func (p *Parser) tokenize(s string) []string {
 	return strings.Fields(s)
 }
 
+// tokenizeRaw applies extra delimiters but skips mask substitution, giving
+// the original tokens for alignment in ExtractParameters.
+func (p *Parser) tokenizeRaw(s string) []string {
+	for _, delimiter := range p.extraDelimiters {
+		s = strings.ReplaceAll(s, delimiter, " ")
+	}
+	return strings.Fields(s)
+}
+
+func isVariable(token string) bool {
+	return len(token) > 2 && token[0] == '<' && token[len(token)-1] == '>'
+}
+
+func variableName(token string) string {
+	return token[1 : len(token)-1]
+}
+
+// ExtractParameters recovers the raw values that filled each variable position
+// in template when it was matched against line.
+//
+// template is typically [Result.Tokens] from a prior [Parser.Train] or
+// [Parser.Match] call. The second return value is false when the token count
+// of line (after applying extra delimiters) does not equal len(template),
+// which can happen if a mask regex matches a span that contains spaces.
+//
+// Only variable positions — wildcards ([Wildcard]) and named masks — appear
+// in the returned slice; static tokens are skipped.
+//
+// ExtractParameters is safe to call concurrently with Train and Match.
+func (p *Parser) ExtractParameters(template []string, line string) ([]ExtractedParameter, bool) {
+	p.mu.RLock()
+	raw := p.tokenizeRaw(line)
+	p.mu.RUnlock()
+
+	if len(raw) != len(template) {
+		return nil, false
+	}
+
+	var out []ExtractedParameter
+	for i, tok := range template {
+		if isVariable(tok) {
+			out = append(out, ExtractedParameter{
+				Value: raw[i],
+				Name:  variableName(tok),
+			})
+		}
+	}
+	return out, true
+}
+
 func (p *Parser) evictIfNeeded() {
 	if p.maxClusters <= 0 || len(p.clusters) < p.maxClusters {
 		return

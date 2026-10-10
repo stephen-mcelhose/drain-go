@@ -71,6 +71,14 @@ type Result struct {
 	Change ChangeType
 }
 
+// ExtractedParameter is a single variable value recovered from a log line by
+// [Parser.ExtractParameters]. Name is the mask name (e.g. "IP") for a named
+// mask position, or "*" for a catch-all wildcard position.
+type ExtractedParameter struct {
+	Value string // raw token from the original log line
+	Name  string // mask name or "*"
+}
+
 // Cluster is a learned log-event template. Values returned by Clusters are
 // deep copies; callers may freely mutate the Template slice.
 type Cluster struct {

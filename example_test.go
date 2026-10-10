@@ -48,3 +48,62 @@ func Example() {
 	// classified as template 2: user <*> logged in
 	// classified as template 1: connected to <IP>
 }
+
+func ExampleParser_Serialize() {
+	parser, err := drain.New(drain.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	parser.Train("user alice logged in")
+	parser.Train("user bob logged in")
+
+	data, err := parser.Serialize()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	restored, err := drain.Load(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Restored parser classifies without retraining.
+	if result, ok := restored.Match("user carol logged in"); ok {
+		fmt.Printf("template=%q clusters=%d\n", result.Template, result.ClusterCount)
+	}
+
+	// Output:
+	// template="user <*> logged in" clusters=1
+}
+
+func ExampleParser_ExtractParameters() {
+	parser, err := drain.New(drain.Config{
+		Masks: []drain.Mask{
+			{Pattern: `\b(?:\d{1,3}\.){3}\d{1,3}\b`, Name: "IP"},
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	parser.Train("connected to 10.0.0.1")
+	parser.Train("connected to 192.168.0.1")
+
+	result, ok := parser.Match("connected to 10.0.0.2")
+	if !ok {
+		log.Fatal("no match")
+	}
+
+	params, ok := parser.ExtractParameters(result.Tokens, "connected to 10.0.0.2")
+	if !ok {
+		log.Fatal("extraction failed")
+	}
+
+	for _, p := range params {
+		fmt.Printf("name=%s value=%s\n", p.Name, p.Value)
+	}
+
+	// Output:
+	// name=IP value=10.0.0.2
+}

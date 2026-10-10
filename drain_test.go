@@ -695,6 +695,144 @@ func TestConcurrency(t *testing.T) {
 	})
 }
 
+// ── ExtractParameters ─────────────────────────────────────────────────────────
+
+func TestExtractParameters(t *testing.T) {
+	cases := []struct {
+		name     string
+		cfg      Config
+		train    []string
+		template []string
+		line     string
+		want     []ExtractedParameter
+		wantOK   bool
+	}{
+		{
+			name:     "ExtractParameters MUST return an empty slice when the template has no variable positions",
+			cfg:      Config{SimilarityThreshold: 1},
+			train:    []string{"user alice logged in"},
+			template: []string{"user", "alice", "logged", "in"},
+			line:     "user alice logged in",
+			want:     nil,
+			wantOK:   true,
+		},
+		{
+			name:     "ExtractParameters MUST extract a single catch-all wildcard",
+			cfg:      Config{},
+			train:    []string{"user alice logged in", "user bob logged in"},
+			template: []string{"user", Wildcard, "logged", "in"},
+			line:     "user carol logged in",
+			want:     []ExtractedParameter{{Value: "carol", Name: "*"}},
+			wantOK:   true,
+		},
+		{
+			name: "ExtractParameters MUST extract a single named mask",
+			cfg: Config{
+				Masks: []Mask{{Name: "IP", Pattern: `\b(?:\d{1,3}\.){3}\d{1,3}\b`}},
+			},
+			train:    []string{"connected to 10.0.0.1"},
+			template: []string{"connected", "to", "<IP>"},
+			line:     "connected to 192.168.1.1",
+			want:     []ExtractedParameter{{Value: "192.168.1.1", Name: "IP"}},
+			wantOK:   true,
+		},
+		{
+			name: "ExtractParameters MUST extract mixed wildcard and named mask positions",
+			cfg: Config{
+				Masks: []Mask{{Name: "IP", Pattern: `\b(?:\d{1,3}\.){3}\d{1,3}\b`}},
+			},
+			train: []string{
+				"user alice connected to 10.0.0.1",
+				"user bob connected to 10.0.0.1",
+			},
+			template: []string{"user", Wildcard, "connected", "to", "<IP>"},
+			line:     "user carol connected to 192.168.1.1",
+			want: []ExtractedParameter{
+				{Value: "carol", Name: "*"},
+				{Value: "192.168.1.1", Name: "IP"},
+			},
+			wantOK: true,
+		},
+		{
+			name:     "ExtractParameters MUST return false when token count does not match",
+			cfg:      Config{},
+			train:    []string{"hello world"},
+			template: []string{"hello", "world"},
+			line:     "hello beautiful world",
+			want:     nil,
+			wantOK:   false,
+		},
+		{
+			name:     "ExtractParameters MUST return an empty slice and true for an empty template and empty line",
+			cfg:      Config{},
+			train:    nil,
+			template: []string{},
+			line:     "",
+			want:     nil,
+			wantOK:   true,
+		},
+		{
+			name: "ExtractParameters MUST respect ExtraDelimiters when tokenizing the raw line",
+			cfg:  Config{ExtraDelimiters: []string{"|"}},
+			train: []string{
+				"user|alice|logged|in",
+				"user|bob|logged|in",
+			},
+			template: []string{"user", Wildcard, "logged", "in"},
+			line:     "user|carol|logged|in",
+			want:     []ExtractedParameter{{Value: "carol", Name: "*"}},
+			wantOK:   true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := mustNew(t, tc.cfg)
+			for _, line := range tc.train {
+				p.Train(line)
+			}
+
+			got, ok := p.ExtractParameters(tc.template, tc.line)
+			if ok != tc.wantOK {
+				t.Fatalf("ok = %v, want %v", ok, tc.wantOK)
+			}
+			if len(got) != len(tc.want) {
+				t.Fatalf("len(got) = %d, want %d; got %v", len(got), len(tc.want), got)
+			}
+			for i := range got {
+				if got[i] != tc.want[i] {
+					t.Errorf("param[%d] = %+v, want %+v", i, got[i], tc.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestExtractParametersConcurrency(t *testing.T) {
+	t.Run("ExtractParameters MUST NOT data-race under concurrent Train calls", func(t *testing.T) {
+		p := mustNew(t, Config{
+			Masks: []Mask{{Name: "IP", Pattern: `\b(?:\d{1,3}\.){3}\d{1,3}\b`}},
+		})
+		p.Train("connected to 10.0.0.1")
+		p.Train("connected to 192.168.0.1")
+
+		template := []string{"connected", "to", "<IP>"}
+		var wg sync.WaitGroup
+		for i := 0; i < 50; i++ {
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				p.Train("connected to 10.0.0.2")
+			}()
+			go func() {
+				defer wg.Done()
+				p.ExtractParameters(template, "connected to 10.0.0.3")
+			}()
+		}
+		wg.Wait()
+	})
+}
+
 // ── MatchWithStrategy (deprecated shim) ──────────────────────────────────────
 
 func TestMatchWithStrategy(t *testing.T) {
