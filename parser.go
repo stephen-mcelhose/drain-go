@@ -18,7 +18,7 @@ type compiledMask struct {
 // Parser is safe for concurrent calls. Train learns templates; Match only classifies.
 type Parser struct {
 	mu                 sync.RWMutex
-	depth              int
+	leadingTokens      int
 	maxNodeDepth       int
 	maxChildren        int
 	similarity         float64
@@ -35,11 +35,11 @@ type Parser struct {
 
 // New constructs a streaming Drain parser.
 func New(cfg Config) (*Parser, error) {
-	if cfg.Depth == 0 {
-		cfg.Depth = 4
+	if cfg.LeadingTokens == 0 {
+		cfg.LeadingTokens = 1
 	}
-	if cfg.Depth < 3 {
-		return nil, errors.New("drain: depth must be at least 3")
+	if cfg.LeadingTokens < 0 {
+		return nil, errors.New("drain: leading tokens must be non-negative")
 	}
 	if cfg.SimilarityThreshold == 0 {
 		cfg.SimilarityThreshold = 0.4
@@ -72,8 +72,8 @@ func New(cfg Config) (*Parser, error) {
 	}
 
 	return &Parser{
-		depth:              cfg.Depth,
-		maxNodeDepth:       cfg.Depth - 2,
+		leadingTokens:      cfg.LeadingTokens,
+		maxNodeDepth:       cfg.LeadingTokens + 1,
 		maxChildren:        cfg.MaxChildren,
 		similarity:         cfg.SimilarityThreshold,
 		maxClusters:        cfg.MaxClusters,

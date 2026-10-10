@@ -21,7 +21,7 @@ type serializedParser struct {
 }
 
 type serializedConfig struct {
-	Depth                    int      `json:"depth"`
+	LeadingTokens            int      `json:"leading_tokens"`
 	SimilarityThreshold      float64  `json:"similarity_threshold"`
 	MaxChildren              int      `json:"max_children"`
 	MaxClusters              int      `json:"max_clusters"`
@@ -67,7 +67,7 @@ func (p *Parser) Serialize() ([]byte, error) {
 	sp := serializedParser{
 		Version: serializationVersion,
 		Config: serializedConfig{
-			Depth:                    p.depth,
+			LeadingTokens:            p.leadingTokens,
 			SimilarityThreshold:      p.similarity,
 			MaxChildren:              p.maxChildren,
 			MaxClusters:              p.maxClusters,
@@ -100,7 +100,7 @@ func Load(data []byte) (*Parser, error) {
 	// Reconstruct via New so config validation is re-run.
 	b := sp.Config.ParametrizeNumericTokens
 	cfg := Config{
-		Depth:                    sp.Config.Depth,
+		LeadingTokens:            sp.Config.LeadingTokens,
 		SimilarityThreshold:      sp.Config.SimilarityThreshold,
 		MaxChildren:              sp.Config.MaxChildren,
 		MaxClusters:              sp.Config.MaxClusters,

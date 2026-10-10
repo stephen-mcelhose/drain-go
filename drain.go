@@ -10,9 +10,10 @@ const Wildcard = "<*>"
 
 // Config controls the parser. Zero-valued fields receive documented defaults.
 type Config struct {
-	// Depth includes the root and token-count levels. It must be at least 3.
-	// The default (4) indexes the first two message tokens.
-	Depth int
+	// LeadingTokens is the number of leading message tokens used as routing
+	// keys in the parse tree. Must be non-negative; the default is 1.
+	// Higher values narrow candidates faster but require more tree memory.
+	LeadingTokens int
 	// SimilarityThreshold is the fraction of equal, non-wildcard tokens required
 	// to join an existing cluster. The default is 0.4.
 	SimilarityThreshold float64

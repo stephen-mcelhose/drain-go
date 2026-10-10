@@ -41,7 +41,7 @@ import (
 
 func main() {
     parser, err := drain.New(drain.Config{
-        Depth:               4,
+        LeadingTokens:       1,
         SimilarityThreshold: 0.4,
         MaxClusters:         10_000, // 0 means unbounded
         Masks: []drain.Mask{
@@ -120,7 +120,7 @@ r, ok = parser.Match(line, drain.WithStrategy(drain.FullSearchAlways))
 
 | Field                      | Default    | Purpose                                                                                                                                      |
 |----------------------------|:----------:|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `Depth`                    | `4`        | Total tree depth; at least `3`. A value of 4 uses up to two leading tokens for routing.                                                      |
+| `LeadingTokens`            | `1`        | Number of leading message tokens used as routing keys. `0` = token-count routing only; each additional level narrows candidates faster.       |
 | `SimilarityThreshold`      | `0.4`      | Minimum fraction of equal non-wildcard tokens for an existing cluster to accept a training message.                                          |
 | `MaxChildren`              | `100`      | Maximum token children per internal tree node.                                                                                               |
 | `MaxClusters`              | unbounded  | Number of live clusters; at capacity, the least recently used cluster is evicted.                                                            |
@@ -130,7 +130,7 @@ r, ok = parser.Match(line, drain.WithStrategy(drain.FullSearchAlways))
 
 ## Algorithm behavior
 
-Drain first tokenizes a preprocessed log message. It reaches a candidate leaf through a tree whose first level is the token count and whose remaining fixed levels use leading tokens. Dynamic or highly variable routing positions use `<*>`. Each leaf stores candidate clusters. For each candidate, similarity is the number of equal non-wildcard tokens divided by message length. The best candidate at or above the threshold is selected; otherwise a new cluster is added. When an existing cluster accepts a line, every differing template position becomes `<*>`.
+Drain first tokenizes a preprocessed log message. It reaches a candidate leaf through a tree whose first level is the token count and whose next `LeadingTokens` levels use leading message tokens as routing keys. Dynamic or highly variable routing positions use `<*>`. Each leaf stores candidate clusters. For each candidate, similarity is the number of equal non-wildcard tokens divided by message length. The best candidate at or above the threshold is selected; otherwise a new cluster is added. When an existing cluster accepts a line, every differing template position becomes `<*>`.
 
 `Match` requires a perfect template match, counting `<*>` as matching a token. Its default `FullSearchFallback` strategy protects inference from a tree-routing miss by scanning only clusters of the same token count. Use `TreeOnly` for fastest routing, or `FullSearchAlways` when choosing the optimal same-length candidate is more important than performance. Both the strategy and the similarity threshold are configurable per call via `MatchOption`.
 

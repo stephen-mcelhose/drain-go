@@ -24,8 +24,8 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "New MUST return an error when Depth is less than 3",
-			cfg:     Config{Depth: 2},
+			name:    "New MUST return an error when LeadingTokens is negative",
+			cfg:     Config{LeadingTokens: -1},
 			wantErr: true,
 		},
 		{
@@ -59,8 +59,8 @@ func TestNew(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "New MUST succeed when Depth is exactly 3",
-			cfg:     Config{Depth: 3},
+			name:    "New MUST succeed when LeadingTokens is exactly 0",
+			cfg:     Config{LeadingTokens: 0},
 			wantErr: false,
 		},
 		{
@@ -96,11 +96,11 @@ func TestNewDefaults(t *testing.T) {
 		check func(t *testing.T, p *Parser)
 	}{
 		{
-			name: "New MUST apply a default Depth of 4 when Depth is zero",
+			name: "New MUST apply a default LeadingTokens of 1 when LeadingTokens is zero",
 			cfg:  Config{},
 			check: func(t *testing.T, p *Parser) {
-				if p.depth != 4 {
-					t.Errorf("depth = %d, want 4", p.depth)
+				if p.leadingTokens != 1 {
+					t.Errorf("leadingTokens = %d, want 1", p.leadingTokens)
 				}
 			},
 		},
@@ -418,7 +418,7 @@ func TestMatch(t *testing.T) {
 		},
 		{
 			name:   "Match with WithStrategy(FullSearchAlways) MUST find a cluster even without tree routing",
-			cfg:    Config{Depth: 3}, // minimal tree depth
+			cfg:    Config{LeadingTokens: 0}, // no leading-token routing
 			train:  []string{"user alice logged in", "user bob logged in"},
 			line:   "user carol logged in",
 			opts:   []MatchOption{WithStrategy(FullSearchAlways)},
@@ -455,10 +455,10 @@ func TestMatch(t *testing.T) {
 func TestMatchTreeOnlyMiss(t *testing.T) {
 	const name = "Match with WithStrategy(TreeOnly) MUST return false on a tree-routing miss even when a same-length cluster exists"
 	t.Run(name, func(t *testing.T) {
-		// Depth 3: only token-count routing, no leading-token nodes.
+		// LeadingTokens: 1 routes on the first token only.
 		// FullSearchFallback would still find a same-length cluster.
 		// TreeOnly must not fall back to linear scan.
-		p := mustNew(t, Config{Depth: 4, SimilarityThreshold: 0.4})
+		p := mustNew(t, Config{LeadingTokens: 1, SimilarityThreshold: 0.4})
 		p.Train("alpha beta gamma")
 		p.Train("alpha delta gamma")
 		// Template is "alpha <*> gamma". Tree routes via "alpha".

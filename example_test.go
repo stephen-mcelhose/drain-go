@@ -9,7 +9,7 @@ import (
 
 func Example() {
 	parser, err := drain.New(drain.Config{
-		Depth:               4,
+		LeadingTokens:       1,
 		SimilarityThreshold: 0.4,
 		MaxClusters:         10_000,
 		Masks: []drain.Mask{
