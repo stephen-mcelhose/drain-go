@@ -1,0 +1,19 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of `go build`
+/drain-go
+
+# Go workspace file
+go.work
+go.work.sum
+
+# macOS
+.DS_Store

@@ -17,7 +17,7 @@ The parser is designed for **long-running log streams**:
 ## Install
 
 ```bash
-go get github.com/example/drain
+go get github.com/stephen-mcelhose/drain-go
 ```
 
 For local development:
@@ -35,7 +35,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/example/drain"
+    "github.com/stephen-mcelhose/drain-go"
 )
 
 func main() {
