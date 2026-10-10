@@ -38,9 +38,9 @@ type Config struct {
 // Mask replaces a regular-expression pattern with a named placeholder before tokenization.
 type Mask struct {
 	// Name is used as the placeholder: <Name>.
-	Name string
+	Name string `json:"name"`
 	// Pattern is a Go RE2 regular expression.
-	Pattern string
+	Pattern string `json:"pattern"`
 }
 
 // ChangeType describes how a training call affected the cluster set.
