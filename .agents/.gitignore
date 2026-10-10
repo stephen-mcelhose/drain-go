@@ -4,8 +4,10 @@
 # Session data (may contain sensitive conversation history)
 sessions/
 
-# Permissions (user/machine specific)
+# Permissions and skill registry (user/machine specific)
 permissions.json
+skills.json
+skills.lock
 
 # Debug logs
 debug.log
