@@ -3,6 +3,7 @@ package drain
 import (
 	"container/list"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -33,25 +34,43 @@ type Parser struct {
 	nextID             int
 }
 
+const (
+	DefaultLeadingTokens       = 1
+	DefaultSimilarityThreshold = 0.4
+	DefaultMaxChildren         = 100
+)
+
+var (
+	ErrDrainLeadingTokensMustBeNonNegative = errors.New("drain: leading tokens must be non-negative")
+	ErrDrainSimilarityThresholdConstraints = errors.New("drain: similarity threshold must be in [0, 1]")
+	ErrMaxChildrenContraints               = errors.New("drain: max children must be positive")
+	ErrMaskNameConstraints                 = errors.New("drain: mask name cannot be empty")
+)
+
+// NewReplacement constructs a replacement Tag
+func NewReplacement(name string) string {
+	return fmt.Sprintf("<%s>", name)
+}
+
 // New constructs a streaming Drain parser.
 func New(cfg Config) (*Parser, error) {
 	if cfg.LeadingTokens == 0 {
-		cfg.LeadingTokens = 1
+		cfg.LeadingTokens = DefaultLeadingTokens
 	}
 	if cfg.LeadingTokens < 0 {
-		return nil, errors.New("drain: leading tokens must be non-negative")
+		return nil, ErrDrainLeadingTokensMustBeNonNegative
 	}
 	if cfg.SimilarityThreshold == 0 {
-		cfg.SimilarityThreshold = 0.4
+		cfg.SimilarityThreshold = DefaultSimilarityThreshold
 	}
 	if cfg.SimilarityThreshold < 0 || cfg.SimilarityThreshold > 1 {
-		return nil, errors.New("drain: similarity threshold must be in [0, 1]")
+		return nil, ErrDrainSimilarityThresholdConstraints
 	}
 	if cfg.MaxChildren == 0 {
-		cfg.MaxChildren = 100
+		cfg.MaxChildren = DefaultMaxChildren
 	}
 	if cfg.MaxChildren < 1 {
-		return nil, errors.New("drain: max children must be positive")
+		return nil, ErrMaxChildrenContraints
 	}
 
 	parametrize := true
@@ -62,13 +81,13 @@ func New(cfg Config) (*Parser, error) {
 	masks := make([]compiledMask, 0, len(cfg.Masks))
 	for _, m := range cfg.Masks {
 		if m.Name == "" {
-			return nil, errors.New("drain: mask name cannot be empty")
+			return nil, ErrMaskNameConstraints
 		}
 		re, err := regexp.Compile(m.Pattern)
 		if err != nil {
 			return nil, err
 		}
-		masks = append(masks, compiledMask{re: re, name: m.Name, replacement: "<" + m.Name + ">"})
+		masks = append(masks, compiledMask{re: re, name: m.Name, replacement: NewReplacement(m.Name)})
 	}
 
 	return &Parser{

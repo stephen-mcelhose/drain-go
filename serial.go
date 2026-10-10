@@ -37,8 +37,8 @@ type serialCluster struct {
 }
 
 type serialNode struct {
-	Children map[string]*serialNode `json:"c,omitempty"`
-	Clusters []int                  `json:"ids,omitempty"`
+	Children   map[string]*serialNode `json:"children,omitempty"`
+	ClusterIDs []int                  `json:"cluster_ids,omitempty"`
 }
 
 // Serialize encodes the full parser state — clusters, tree, LRU order, and
@@ -151,7 +151,7 @@ func serializeNode(n *node, clusters map[int]*Cluster) *serialNode {
 	sn := &serialNode{}
 	for _, id := range n.clusters {
 		if clusters[id] != nil {
-			sn.Clusters = append(sn.Clusters, id)
+			sn.ClusterIDs = append(sn.ClusterIDs, id)
 		}
 	}
 	for k, child := range n.children {
@@ -163,7 +163,7 @@ func serializeNode(n *node, clusters map[int]*Cluster) *serialNode {
 			sn.Children[k] = sc
 		}
 	}
-	if len(sn.Clusters) == 0 && len(sn.Children) == 0 {
+	if len(sn.ClusterIDs) == 0 && len(sn.Children) == 0 {
 		return nil
 	}
 	return sn
@@ -171,8 +171,8 @@ func serializeNode(n *node, clusters map[int]*Cluster) *serialNode {
 
 func deserializeNode(sn *serialNode) *node {
 	n := newNode()
-	if len(sn.Clusters) > 0 {
-		n.clusters = append([]int(nil), sn.Clusters...)
+	if len(sn.ClusterIDs) > 0 {
+		n.clusters = append([]int(nil), sn.ClusterIDs...)
 	}
 	for k, child := range sn.Children {
 		n.children[k] = deserializeNode(child)

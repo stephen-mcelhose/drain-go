@@ -34,10 +34,17 @@ func Example() {
 	if result, ok := parser.Match("user carol logged in"); ok {
 		fmt.Printf("classified as template %d: %s\n", result.ClusterID, result.Template)
 	}
+
+	// Masks: named masks can be supplied
+	if result, ok := parser.Match("connected to 192.168.0.1"); ok {
+		fmt.Printf("classified as template %d: %s\n", result.ClusterID, result.Template)
+	}
+
 	// Output:
 	// id=1 change=cluster_created template="connected to <IP>"
 	// id=1 change=none template="connected to <IP>"
 	// id=2 change=cluster_created template="user alice logged in"
 	// id=2 change=cluster_template_changed template="user <*> logged in"
 	// classified as template 2: user <*> logged in
+	// classified as template 1: connected to <IP>
 }

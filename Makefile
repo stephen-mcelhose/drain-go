@@ -8,3 +8,4 @@ endif
 	go vet ./...
 	git tag v$(VERSION)
 	git push origin v$(VERSION)
+	gh release create v$(VERSION) --generate-notes
