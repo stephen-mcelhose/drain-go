@@ -11,6 +11,7 @@ import (
 
 type compiledMask struct {
 	re          *regexp.Regexp
+	name        string
 	replacement string
 }
 
@@ -67,7 +68,7 @@ func New(cfg Config) (*Parser, error) {
 		if err != nil {
 			return nil, err
 		}
-		masks = append(masks, compiledMask{re, "<" + m.Name + ">"})
+		masks = append(masks, compiledMask{re: re, name: m.Name, replacement: "<" + m.Name + ">"})
 	}
 
 	return &Parser{
@@ -117,14 +118,30 @@ func (p *Parser) Train(line string) Result {
 }
 
 // Match classifies line against learned templates without changing parser state.
-// It requires a perfect match when wildcard fields are included in similarity.
-func (p *Parser) Match(line string) (Result, bool) {
-	return p.MatchWithStrategy(line, FullSearchFallback)
+// By default it requires a perfect template match using FullSearchFallback.
+// Use MatchOption values to adjust the search strategy or similarity threshold:
+//
+//	r, ok := parser.Match(line, drain.WithStrategy(drain.TreeOnly))
+//	r, ok := parser.Match(line, drain.WithSimilarityThreshold(0.7))
+func (p *Parser) Match(line string, opts ...MatchOption) (Result, bool) {
+	cfg := defaultMatchConfig()
+	for _, o := range opts {
+		o(&cfg)
+	}
+	return p.matchWith(line, cfg.strategy, cfg.threshold)
 }
 
-// MatchWithStrategy runs inference-only matching. FullSearchFallback is a safe default;
-// it preserves tree speed in normal cases but scans same-length clusters after a miss.
+// MatchWithStrategy runs inference-only matching with an explicit search strategy.
+//
+// Deprecated: Use Match with WithStrategy instead:
+//
+//	parser.Match(line, drain.WithStrategy(strategy))
 func (p *Parser) MatchWithStrategy(line string, strategy SearchStrategy) (Result, bool) {
+	return p.Match(line, WithStrategy(strategy))
+}
+
+// matchWith is the internal implementation shared by Match and MatchWithStrategy.
+func (p *Parser) matchWith(line string, strategy SearchStrategy, threshold float64) (Result, bool) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
@@ -133,11 +150,11 @@ func (p *Parser) MatchWithStrategy(line string, strategy SearchStrategy) (Result
 
 	switch strategy {
 	case FullSearchAlways:
-		c = p.fullSearch(tokens, 1)
+		c = p.fullSearch(tokens, threshold)
 	default:
-		c = p.treeSearch(tokens, 1, true)
+		c = p.treeSearch(tokens, threshold, true)
 		if c == nil && strategy == FullSearchFallback {
-			c = p.fullSearch(tokens, 1)
+			c = p.fullSearch(tokens, threshold)
 		}
 	}
 

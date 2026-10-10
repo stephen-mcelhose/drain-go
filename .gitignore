@@ -17,3 +17,4 @@ go.work.sum
 
 # macOS
 .DS_Store
+docs/research/pjhe_icws2017.pdf
